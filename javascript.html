@@ -1,0 +1,144 @@
+<script>
+    function addMessage(error) {
+        const errorDiv = document.getElementById('error');
+        errorDiv.hidden = false;
+        errorDiv.innerHTML = error;
+        errorDiv.style.color = 'red';
+    }
+    const myRunner = google.script.run.withFailureHandler(addMessage);
+
+    function getFormData(checkSheet=false) {
+        let formInputs = Array.from(document.querySelectorAll('#queryForm input, select, textarea'))
+            .reduce((acc, input) => ({...acc, [input.id]: input.value }), {})
+
+        formInputs.cleanedQuery = formInputs.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g,' ').trim()
+
+        if ((checkSheet) && !(formInputs.dataSheet || formInputs.currentSheet === 'checked')) {
+            addMessage('You must select a sheet!')
+            throw 'You must select a sheet!';
+        } else {
+            if (formInputs.currentSheet === 'checked') {
+                formInputs.useActiveSheet = 'true';
+                formInputs.dataSheet = null;
+            } else {
+                formInputs.useActiveSheet = 'false';
+            }
+
+            return formInputs
+        }
+    }
+
+    function callPicker() {
+        getFormData();
+        //myRunner.picker();
+    }
+
+    function queryFilter(filter) {
+        let queryFilter = '';
+        queryFilter.concat(filter.chain, ' ', filter.column, ' ', filter.compareInput, ' ', filter.value, ' ');
+        return queryFilter;
+    }
+
+    function handleFormSubmit() {
+        const formData = getFormData(true);
+        if (formData) {
+            let query = '';
+            for (qFilter in formData.qFilter) {
+                queryPart = queryFilter(qFilter)
+                query += queryPart
+            }
+            myRunner.buildQuery(formData)
+        }
+    }
+
+    function updateInputs(data) {
+        // I would really love to run this through a loop and fill getElementById's dynamically
+        // but having trouble making it work. It doesn't seem to like the id coming from an
+        // object key (even if converted to a string)
+        if (data.dataSheet) {
+            const myDiv = document.getElementById('selectedSheetDiv');
+            const link = "'" + data.dataSheet + "'"
+            myDiv.hidden = false;
+            myDiv.innerHTML += "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>"
+
+            document.getElementById('dataSheet').value = data.dataSheet;
+        }
+        if (data.myRange) {
+            document.getElementById('myRange').value = data.myRange;
+        }
+        if (data.cleanedQuery) {
+            document.getElementById('longQuery').value = data.cleanedQuery;
+        }
+        if (data.useActiveSheet == 'true') {
+            document.getElementById('currentSheet').checked = true;
+        }
+    }
+
+    function updateRange(range) {
+        document.getElementById('myRange').value = range;
+    }
+
+
+    function requiredElements(elements, required) {
+        elements.forEach(function (element) {
+            element.required = required
+        })
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        myRunner.withSuccessHandler(updateInputs).getFromCache();
+
+        const currentSheetSelector = document.getElementById('currentSheet')
+        currentSheetSelector.value = null;
+        const dynamicRangeSelector = document.getElementById('dynamicRange')
+        const myRangeInput = document.getElementById('myRange')
+        const helpCheckbox = document.getElementById('help')
+
+        // watches checkbox for current sheet
+        currentSheetSelector.addEventListener('change', function () {
+            if (currentSheetSelector.checked) {
+                currentSheetSelector.value = 'checked'
+                document.getElementById('dynamicRangePicker').hidden = false;
+            } else {
+                currentSheetSelector.value = null;
+                document.getElementById('dynamicRangePicker').hidden = true;
+                dynamicRangeSelector.checked = false;
+                myRangeInput.disabled = false;
+            }
+
+            document.getElementById('dynamicRangePicker').hidden = !currentSheetSelector.checked;
+        })
+
+        // watches checkbox for dynamicRange checkbox
+        dynamicRangeSelector.addEventListener('change', function () {
+            myRunner.withSuccessHandler(updateRange).getActiveRange();
+            myRangeInput.disabled = dynamicRangeSelector.checked;
+        })
+
+        // watches for helpCheckbox changes
+        helpCheckbox.addEventListener('change', () => {
+            const walkThrough = document.getElementById('queryWalkthrough');
+            const freeForm = document.getElementById('queryFreeForm');
+            if (helpCheckbox.checked) {
+                walkThrough.hidden = false;
+                freeForm.hidden = true;
+                requiredElements(document.querySelectorAll('#queryWalkthrough input'), true)
+                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), false)
+            } else {
+                walkThrough.hidden = true;
+                freeForm.hidden = false;
+                requiredElements(document.querySelectorAll('#queryWalkthrough input'), false)
+                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), true)
+            }
+        })
+    });
+
+    // shit for 'help me out builder'
+    // function formatForCell(value) {
+    //     return "'\"&" + value + "&\"'"
+    // }
+    //
+    // function addSingleQuotes(value) {
+    //     return "'" + value + "'"
+    // }
+</script>

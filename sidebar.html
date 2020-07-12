@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target='_top'>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <script>
+        function preventFormSubmit() {
+            var forms = document.querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+                forms[i].addEventListener('submit', function (event) {
+                    event.preventDefault();
+                });
+            }
+        }
+
+        window.addEventListener('load', preventFormSubmit);
+    </script>
+</head>
+<body>
+<?!= include('javascript'); ?>
+<div class='form-group center top full-width'>
+    <div class='form-styles'>
+        <h1 class='center'>QueryBuilder</h1>
+    </div>
+
+    <br>
+
+    <form id='queryForm' onsubmit='handleFormSubmit()'>
+        <div class='form-styles'>
+            <button type='button' onClick='callPicker()' class='blue data-sheet'>Select a Data Sheet</button>
+            <input type='hidden' id='dataSheet'>
+            <div id="selectedSheetDiv" hidden></div>
+            <input type="checkbox" id="currentSheet">
+            <label for="currentSheet">Use Current Sheet</label>
+        </div>
+
+        <hr>
+
+        <div class='data-range form-styles'>
+            <h3 class=''>Pick Your Data Range</h3>
+            <input type='text' id='myRange' placeholder='Sheet1!A:Z' required>
+            <div id="dynamicRangePicker" hidden>
+                <input type="checkbox" id="dynamicRange">
+                <label for="dynamicRange">Use Entire Range</label>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="query-checkboxes form-styles center">
+            <input type="checkbox" id="help" checked>
+            <label for="help">Help Me Out</label>
+        </div>
+
+        <div class='query form-styles' id="queryFreeForm" hidden>
+            <h3>Insert Query Here</h3>
+            <textarea id='longQuery' rows='5'
+                      placeholder="SELECT * &#10;WHERE Col1 = '1'&#10;AND Col3 != '0'"
+            ></textarea>
+        </div>
+
+        <div class='form-styles left' id="queryWalkthrough">
+            <h3>Build Query Here</h3>
+            <strong><label for="selectInput">SELECT</label></strong>
+            <input type='text' id='selectInput' placeholder="*" required>
+            <strong><label for="column">WHERE</label></strong>
+            <input type='text' id='column' placeholder="A" required>
+            <strong><label for="compareInput">Is:</label></strong>
+            <select id="compareInput" class="compare" required>
+                <option value="=">=</option>
+                <option value="!=">!=</option>
+                <option value=">">></option>
+                <option value="<"><</option>
+                <option value=">=">>=</option>
+                <option value="<="><=</option>
+                <option value="contains">contains</option>
+                <option value="starts with">starts with</option>
+                <option value="ends with">ends with</option>
+            </select>
+            <br>
+            <strong><label for="value">VALUE</label></strong>
+            <input type='text' id='value' placeholder="1" required>
+            <label for='isCell'>Is Value a Cell?</label>
+            <input type='checkbox' id='isCell'>
+        </div>
+
+        <!---
+        Need to add help button and explain some basic things.
+        - How to write query (wrap in parenthases)
+        - How to include specific range
+        - Use Col1, Col2 instead of A, B
+        - Data types must match
+        etc...
+        --->
+        <hr>
+        <div class="add-filter">
+            <h4>Add Filter</h4>
+            <button id="andButton">AND</button>
+        </div>
+        <hr>
+
+        <div id="error" class="form-styles" hidden></div>
+
+<!--        <button id='Submit' class='create'>CREATE QUERY</button>-->
+        <input type="submit" class="create" value="CREATE QUERY">
+        <button onClick='google.script.host.close()'>Close</button>
+    </form>
+</div>
+</body>
+
+<style>
+    .full-width {
+        width: 100%;
+    }
+
+    .form-styles {
+        margin: auto;
+        width: 85%;
+    }
+
+    .left {
+        text-align: left;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .top {
+        margin-top: 20%;
+    }
+
+    input[type="text"], textarea {
+        margin: 10px 0;
+        width: 100%;
+    }
+
+    h3 {
+        text-align: left;
+    }
+
+    .data-sheet {
+        margin-bottom: 3%;
+        width: 100%;
+    }
+
+    hr {
+        margin: 5%;
+    }
+
+    .query-checkboxes {
+        text-align: left;
+    }
+
+    .compare {
+        margin: 10px 0;
+    }
+</style>
+</html>
