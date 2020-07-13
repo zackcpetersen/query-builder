@@ -1,4 +1,6 @@
 <script>
+    let filters = []
+    let query = '';
     function addMessage(error) {
         const errorDiv = document.getElementById('error');
         errorDiv.hidden = false;
@@ -8,7 +10,8 @@
     const myRunner = google.script.run.withFailureHandler(addMessage);
 
     function getFormData(checkSheet=false) {
-        let formInputs = Array.from(document.querySelectorAll('#queryForm input, select, textarea'))
+        // TODO update this to only grab sheet, range and long query
+        let formInputs = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
             .reduce((acc, input) => ({...acc, [input.id]: input.value }), {})
 
         formInputs.cleanedQuery = formInputs.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g,' ').trim()
@@ -40,21 +43,15 @@
     }
 
     function handleFormSubmit() {
-        const formData = getFormData(true);
-        if (formData) {
-            let query = '';
-            for (qFilter in formData.qFilter) {
-                queryPart = queryFilter(qFilter)
-                query += queryPart
-            }
-            myRunner.buildQuery(formData)
-        }
+        const formInputs = getFormData(true);
+        myRunner.buildQuery(formInputs, query)
     }
 
     function updateInputs(data) {
         // I would really love to run this through a loop and fill getElementById's dynamically
         // but having trouble making it work. It doesn't seem to like the id coming from an
         // object key (even if converted to a string)
+        // TODO need to update this - maybe? only needs document, range, and longquery
         if (data.dataSheet) {
             const myDiv = document.getElementById('selectedSheetDiv');
             const link = "'" + data.dataSheet + "'"
@@ -85,14 +82,42 @@
         })
     }
 
-    document.addEventListener('DOMContentLoaded', (event) => {
+    function buildWalkthroughQuery(filters) {
+        // TODO may need to check if value is str or int
+        let query = 'WHERE '
+        let chain;
+        for (let i = 0; i < filters.length; i++) {
+            if (i === 0) {
+                chain = ''
+            } else if (filters[i].chain) {
+                chain = filters[i].chain;
+            } else {
+                chain = 'AND'
+            }
+            query += ''.concat(chain, ' ', filters[i].where, ' ', filters[i].compareInput, ' ', filters[i].val, ' ')
+        }
+        return query;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
         myRunner.withSuccessHandler(updateInputs).getFromCache();
 
-        const currentSheetSelector = document.getElementById('currentSheet')
+        let filterInputs = {}
+        let chain = '';
+        const currentSheetSelector = document.getElementById('currentSheet');
         currentSheetSelector.value = null;
-        const dynamicRangeSelector = document.getElementById('dynamicRange')
-        const myRangeInput = document.getElementById('myRange')
-        const helpCheckbox = document.getElementById('help')
+        const dynamicRangeSelector = document.getElementById('dynamicRange');
+        const myRangeInput = document.getElementById('myRange');
+        const helpCheckbox = document.getElementById('help');
+        const showFilter = document.getElementById('showFilter');
+        const clearQueryFilters = document.getElementById('clearQueryFilters');
+        const andOrDiv = document.getElementById('andOrDiv');
+        const andButton = document.getElementById('andButton');
+        const orButton = document.getElementById('orButton');
+        const addFilter = document.getElementById('addFilter');
+        const queryFilters = document.getElementById('queryFilters');
+        const closeFilterBox = document.getElementById('closeFilterBox');
+        const seeQuery = document.getElementById('seeQuery');
 
         // watches checkbox for current sheet
         currentSheetSelector.addEventListener('change', function () {
@@ -122,18 +147,90 @@
             if (helpCheckbox.checked) {
                 walkThrough.hidden = false;
                 freeForm.hidden = true;
-                requiredElements(document.querySelectorAll('#queryWalkthrough input'), true)
-                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), false)
+                helpCheckbox.value = 'checked';
+                seeQuery.hidden = false;
+                requiredElements(document.querySelectorAll('#queryWalkthrough input'), true);
+                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), false);
             } else {
                 walkThrough.hidden = true;
                 freeForm.hidden = false;
-                requiredElements(document.querySelectorAll('#queryWalkthrough input'), false)
-                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), true)
+                helpCheckbox.value = null;
+                seeQuery.hidden = true;
+                requiredElements(document.querySelectorAll('#queryWalkthrough input'), false);
+                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), true);
             }
+        })
+
+        // watches for show filter button changes
+        showFilter.addEventListener('click', () => {
+            queryFilters.hidden = false
+            showFilter.disabled = true;
+            if (filters.length) {
+                andOrDiv.hidden = false;
+            }
+        })
+
+        clearQueryFilters.addEventListener('click', (event) => {
+            event.preventDefault();
+            filters = [];
+            query = '';
+            seeQuery.innerHTML = filters;
+        })
+
+        addFilter.addEventListener('click', (event) => {
+            // TODO need to make sure that this doesn't get empty values if form is incomplete - can use conditional
+            event.preventDefault();
+            filterInputs = {
+                chain: chain,
+                where: document.getElementById('column').value,
+                compareInput: document.getElementById('compareInput').value,
+                val: document.getElementById('value').value
+            }
+            filters.push(filterInputs);
+
+            // clear filters
+            chain = null;
+            document.getElementById('column').value = null;
+            document.getElementById('compareInput').value = "=";
+            document.getElementById('value').value = null;
+
+            queryFilters.hidden = true
+            showFilter.disabled = false;
+
+            query = buildWalkthroughQuery(filters);
+            seeQuery.hidden = false;
+            seeQuery.innerHTML = query;
+        })
+
+        closeFilterBox.addEventListener('click', () => {
+            queryFilters.hidden = true;
+            showFilter.disabled = false;
+            // clear filters
+            chain = null;
+            document.getElementById('column').value = null;
+            document.getElementById('compareInput').value = "=";
+            document.getElementById('value').value = null;
+        })
+
+        // and / or button clicks
+        andButton.addEventListener('click', () => {
+            chain = andButton.value;
+            andButton.disabled = true;
+            orButton.disabled = false;
+        })
+        orButton.addEventListener('click', () => {
+            chain = orButton.value;
+            orButton.disabled = true;
+            andButton.disabled = false;
         })
     });
 
-    // shit for 'help me out builder'
+
+    // TODO refactor event listener functions to call named functions instead of anonymous ones
+    // TODO switch everything to jQuery?
+
+
+    // TODO - shit for 'help me out builder' need to incorporate this back in
     // function formatForCell(value) {
     //     return "'\"&" + value + "&\"'"
     // }

@@ -63,28 +63,39 @@
             <h3>Build Query Here</h3>
             <strong><label for="selectInput">SELECT</label></strong>
             <input type='text' id='selectInput' placeholder="*" required>
-            <strong><label for="column">WHERE</label></strong>
-            <input type='text' id='column' placeholder="A" required>
-            <strong><label for="compareInput">Is:</label></strong>
-            <select id="compareInput" class="compare" required>
-                <option value="=">=</option>
-                <option value="!=">!=</option>
-                <option value=">">></option>
-                <option value="<"><</option>
-                <option value=">=">>=</option>
-                <option value="<="><=</option>
-                <option value="contains">contains</option>
-                <option value="starts with">starts with</option>
-                <option value="ends with">ends with</option>
-            </select>
-            <br>
-            <strong><label for="value">VALUE</label></strong>
-            <input type='text' id='value' placeholder="1" required>
-            <label for='isCell'>Is Value a Cell?</label>
-            <input type='checkbox' id='isCell'>
+            <button id="showFilter">Add New Filter</button>
+            <button id="clearQueryFilters">Clear Filters</button>
+            <div id="queryFilters" class="query-filters" hidden>
+                <div id="andOrDiv" hidden>
+                    <input id="andButton" type="button" value="AND" required>
+                    <input id="orButton" type="button" value="OR" required>
+                </div>
+                <strong><label for="column">WHERE</label></strong>
+                <input type="text" id="column" class="column" placeholder="A">
+                <strong><label for="compareInput">Is:</label></strong>
+                <select id="compareInput" class="compare">
+                    <option value="=">=</option>
+                    <option value="!=">!=</option>
+                    <option value=">">></option>
+                    <option value="<"><</option>
+                    <option value=">=">>=</option>
+                    <option value="<="><=</option>
+                    <option value="contains">contains</option>
+                    <option value="starts with">starts with</option>
+                    <option value="ends with">ends with</option>
+                </select>
+                <br>
+                <strong><label for="value">VALUE</label></strong>
+                <input type="text" id="value" class="value" placeholder="1">
+                <label for="isCell">Is Value a Cell?</label>
+                <input type="checkbox" id="isCell">
+                <button id="addFilter" class="blue">ADD</button>
+                <button id="closeFilterBox">Close</button>
+            </div>
         </div>
 
         <!---
+        TODO -
         Need to add help button and explain some basic things.
         - How to write query (wrap in parenthases)
         - How to include specific range
@@ -93,13 +104,9 @@
         etc...
         --->
         <hr>
-        <div class="add-filter">
-            <h4>Add Filter</h4>
-            <button id="andButton">AND</button>
-        </div>
-        <hr>
-
+        <div id="seeQuery" class="form-styles left" hidden></div>
         <div id="error" class="form-styles" hidden></div>
+        <hr>
 
 <!--        <button id='Submit' class='create'>CREATE QUERY</button>-->
         <input type="submit" class="create" value="CREATE QUERY">
@@ -134,6 +141,9 @@
         margin: 10px 0;
         width: 100%;
     }
+    input .column {
+        width: 20%;
+    }
 
     h3 {
         text-align: left;
@@ -154,6 +164,11 @@
 
     .compare {
         margin: 10px 0;
+    }
+
+    .query-filters {
+        border: black 1px solid;
+        padding: 5px;
     }
 </style>
 </html>

@@ -40,21 +40,30 @@ function getActiveRange() {
 //   newSheet.getRange(1, 1).setValue(funct);
 // }
 
-function buildQuery(formInputs) {
-    if (formInputs.cleanedQuery) {
-        freeFormQuery(formInputs)
+function buildQuery(formInputs, query) {
+    if (formInputs.help) {
+        walkthroughQuery(formInputs, query)
     } else {
-        walkthroughQuery(formInputs)
+        freeFormQuery(formInputs)
     }
 }
 
-function buildWalkthroughQuery(formInputs) {
-    // take all 'query' inputs and append them to the original (I don't think order matters?)
-}
+// function buildWalkthroughQuery(filters) {
+//     let query = 'WHERE '
+//     let chain = '';
+//     for (let i =0; i < filters.length; i++) {
+//         if (filters[i].chain) {
+//             chain = filters[i].chain;
+//         }
+//         query += ''.concat(chain, ' ', filters[i].where, ' ', filters[i].compareInput, ' ', filters[i].val)
+//     }
+//     return query;
+// }
 
-function walkthroughQuery(formInputs) {
-    // let query = buildWalkthroughQuery(formInputs)
-    const query = 'SELECT ' + formInputs.selectInput + ' WHERE ' + formInputs.column + ' ' + formInputs.compareInput + ' ' + formInputs.value;
+function walkthroughQuery(formInputs, query) {
+    // const query = 'SELECT ' + formInputs.selectInput + ' WHERE ' + formInputs.column + ' ' + formInputs.compareInput + ' ' + formInputs.value;
+    let select = 'SELECT ' + formInputs.selectInput + ' ';
+    query = select + query;
     const queryFunction = "=QUERY(" + formInputs.myRange + ', "' + query + '"' + ", 1)"
     ui.alert(queryFunction)
     // const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet().setName(sheetName);
