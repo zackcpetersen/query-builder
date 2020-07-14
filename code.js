@@ -65,9 +65,8 @@ function walkthroughQuery(formInputs, query) {
     let select = 'SELECT ' + formInputs.selectInput + ' ';
     query = select + query;
     const queryFunction = "=QUERY(" + formInputs.myRange + ', "' + query + '"' + ", 1)"
-    ui.alert(queryFunction)
-    // const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet().setName(sheetName);
-    // newSheet.getRange(1, 1).setValue(funct);
+    const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
+    newSheet.getRange(1, 1).setValue(queryFunction);
 }
 
 function freeFormQuery(formData) {
@@ -79,10 +78,8 @@ function freeFormQuery(formData) {
         queryFunction = "=QUERY(" + dataRange + ', "' + formData.cleanedQuery + '"' + ", 1)"
     }
 
-    ui.alert(queryFunction)
-
-    // var newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
-    // newSheet.getRange(1, 1).setValue(queryFunction);
+    var newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
+    newSheet.getRange(1, 1).setValue(queryFunction);
 }
 
 // Cache Update, Get, and Clear

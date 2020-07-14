@@ -82,21 +82,51 @@
         })
     }
 
+    function getChain(filters, i) {
+        if (i === 0) {
+            return ''
+        } else if (filters[i].chain) {
+            return filters[i].chain;
+        } else {
+            return 'AND'
+        }
+    }
+
+    function formatValue(filter) {
+        if (filter.date) {
+            return formatForDate(filter);
+        } else if (filter.cell) {
+            return formatForCell(filter.val);
+        } else {
+            return filter.val;
+        }
+    }
+
     function buildWalkthroughQuery(filters) {
         // TODO may need to check if value is str or int
         let query = 'WHERE '
-        let chain;
         for (let i = 0; i < filters.length; i++) {
-            if (i === 0) {
-                chain = ''
-            } else if (filters[i].chain) {
-                chain = filters[i].chain;
-            } else {
-                chain = 'AND'
-            }
-            query += ''.concat(chain, ' ', filters[i].where, ' ', filters[i].compareInput, ' ', filters[i].val, ' ')
+            let chain = getChain(filters, i)
+            let val = formatValue(filters[i])
+            query += ''.concat(chain, ' ', filters[i].column.toUpperCase(), ' ', filters[i].compareInput, ' ', val, ' ')
         }
         return query;
+    }
+
+    function formatForDate(filter) {
+        if (filter.cell) {
+            return 'date ' + addSingleQuotes('"&text(datevalue(' + filter.val + '), "yyyy-mm-dd")&"')
+        } else {
+            return 'date ' + addSingleQuotes(filter.val)
+        }
+    }
+
+    function formatForCell(value) {
+        return "'\"&" + value + "&\"'"
+    }
+
+    function addSingleQuotes(value) {
+        return "'" + value + "'"
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -118,6 +148,8 @@
         const queryFilters = document.getElementById('queryFilters');
         const closeFilterBox = document.getElementById('closeFilterBox');
         const seeQuery = document.getElementById('seeQuery');
+        const isDate = document.getElementById('isDate');
+        const dateFormat = document.getElementById('dateFormat');
 
         // watches checkbox for current sheet
         currentSheetSelector.addEventListener('change', function () {
@@ -182,9 +214,11 @@
             event.preventDefault();
             filterInputs = {
                 chain: chain,
-                where: document.getElementById('column').value,
+                column: document.getElementById('column').value,
                 compareInput: document.getElementById('compareInput').value,
-                val: document.getElementById('value').value
+                val: document.getElementById('value').value,
+                cell: document.getElementById('isCell').checked,
+                date: document.getElementById('isDate').checked
             }
             filters.push(filterInputs);
 
@@ -223,19 +257,18 @@
             orButton.disabled = true;
             andButton.disabled = false;
         })
+
+        // add hover message on isDate
+        isDate.addEventListener('click', () => {
+            if (isDate.checked) {
+                dateFormat.hidden = false;
+            } else {
+                dateFormat.hidden = true;
+            }
+        })
     });
 
 
     // TODO refactor event listener functions to call named functions instead of anonymous ones
     // TODO switch everything to jQuery?
-
-
-    // TODO - shit for 'help me out builder' need to incorporate this back in
-    // function formatForCell(value) {
-    //     return "'\"&" + value + "&\"'"
-    // }
-    //
-    // function addSingleQuotes(value) {
-    //     return "'" + value + "'"
-    // }
 </script>
