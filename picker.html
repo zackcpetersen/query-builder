@@ -6,6 +6,7 @@
         function onFailure(error) {
             google.script.run.displayError(error)
         }
+
         var myRunner = google.script.run.withFailureHandler(onFailure);
         var pickerApiLoaded = false;
 
@@ -49,12 +50,12 @@
          * @param {object} data The response object.
          */
         function pickerCallback(data) {
-            var action = data[google.picker.Response.ACTION];
+            const action = data[google.picker.Response.ACTION];
             if (action == google.picker.Action.PICKED) {
-                var doc = data[google.picker.Response.DOCUMENTS][0];
-                var url = doc[google.picker.Document.URL];
-                var sheetName = doc[google.picker.Document.NAME];
-                var url_data = {
+                const doc = data[google.picker.Response.DOCUMENTS][0];
+                const url = doc[google.picker.Document.URL];
+                const sheetName = doc[google.picker.Document.NAME];
+                const url_data = {
                     dataSheet: url,
                     sheetName: sheetName,
                 };

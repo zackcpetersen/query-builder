@@ -3,18 +3,7 @@
 <head>
     <base target='_top'>
     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
-    <script>
-        function preventFormSubmit() {
-            var forms = document.querySelectorAll('form');
-            for (var i = 0; i < forms.length; i++) {
-                forms[i].addEventListener('submit', function (event) {
-                    event.preventDefault();
-                });
-            }
-        }
-
-        window.addEventListener('load', preventFormSubmit);
-    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
 <?!= include('javascript'); ?>
@@ -25,7 +14,7 @@
 
     <br>
 
-    <form id='queryForm' onsubmit='handleFormSubmit()'>
+    <form id='queryForm'>
         <div class='form-styles'>
             <button type='button' onClick='callPicker()' class='blue data-sheet'>Select a Data Sheet</button>
             <input type='hidden' id='dataSheet'>
@@ -39,10 +28,6 @@
         <div class='data-range form-styles'>
             <h3 class=''>Pick Your Data Range</h3>
             <input type='text' id='myRange' placeholder='Sheet1!A:Z' required>
-            <div id="dynamicRangePicker" hidden>
-                <input type="checkbox" id="dynamicRange">
-                <label for="dynamicRange">Use Entire Range</label>
-            </div>
         </div>
 
         <hr>
@@ -63,12 +48,12 @@
             <h3>Build Query Here</h3>
             <strong><label for="selectInput">SELECT</label></strong>
             <input type='text' id='selectInput' placeholder="*" required>
-            <button id="showFilter">Add New Filter</button>
-            <button id="clearQueryFilters">Clear Filters</button>
+            <button id="showFilter" type="button">Add New Filter</button>
+            <button id="clearQueryFilters" type="button">Clear Filters</button>
             <div id="queryFilters" class="query-filters" hidden>
                 <div id="andOrDiv" hidden>
-                    <input id="andButton" type="button" value="AND" required>
-                    <input id="orButton" type="button" value="OR" required>
+                    <input id="andButton" type="button" value="AND">
+                    <input id="orButton" type="button" value="OR">
                 </div>
                 <strong><label for="column">WHERE</label></strong>
                 <input type="text" id="column" class="column" placeholder="A">
@@ -91,10 +76,10 @@
                 <label for="isCell">Is Value a Cell?</label>
                 <input type="checkbox" id="isCell">
                 <label for="isDate">Is Value a Date?</label>
-                <input type="checkbox" id="isDate" title="Use yyyy-mm-dd format" class="p-0 m-0">
+                <input type="checkbox" id="isDate" title="Use yyyy-mm-dd format">
                 <br>
-                <button id="addFilter" class="blue">ADD</button>
-                <button id="closeFilterBox">Close</button>
+                <button id="addFilter" class="blue" type="button">ADD</button>
+                <button id="closeFilterBox" type="button">Close</button>
             </div>
         </div>
 
@@ -113,8 +98,8 @@
         <hr>
 
 <!--        <button id='Submit' class='create'>CREATE QUERY</button>-->
-        <input type="submit" class="create" value="CREATE QUERY">
-        <button onClick='google.script.host.close()'>Close</button>
+        <input type="button" class="create" value="CREATE QUERY">
+        <button onClick='google.script.host.close()' type="button">Close</button>
     </form>
 </div>
 </body>

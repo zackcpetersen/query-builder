@@ -30,16 +30,6 @@ function getActiveRange() {
     return activeSheet + "!" + range
 }
 
-// Query Builders
-// keeping this in case I want to go back to walk along
-// function createQuery(sheetName, myRange, select, column, compare, value) {
-//   var query = 'SELECT ' + select + ' WHERE ' + column + ' ' + compare + ' ' + value;
-//   var currentSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getName();
-//   var funct = "=QUERY(" + currentSheet + '!' + myRange + ', "' + query + '"' + ", 1)"
-//   var newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet().setName(sheetName);
-//   newSheet.getRange(1, 1).setValue(funct);
-// }
-
 function buildQuery(formInputs, query) {
     if (formInputs.help) {
         walkthroughQuery(formInputs, query)
@@ -48,20 +38,7 @@ function buildQuery(formInputs, query) {
     }
 }
 
-// function buildWalkthroughQuery(filters) {
-//     let query = 'WHERE '
-//     let chain = '';
-//     for (let i =0; i < filters.length; i++) {
-//         if (filters[i].chain) {
-//             chain = filters[i].chain;
-//         }
-//         query += ''.concat(chain, ' ', filters[i].where, ' ', filters[i].compareInput, ' ', filters[i].val)
-//     }
-//     return query;
-// }
-
 function walkthroughQuery(formInputs, query) {
-    // const query = 'SELECT ' + formInputs.selectInput + ' WHERE ' + formInputs.column + ' ' + formInputs.compareInput + ' ' + formInputs.value;
     let select = 'SELECT ' + formInputs.selectInput + ' ';
     query = select + query;
     const queryFunction = "=QUERY(" + formInputs.myRange + ', "' + query + '"' + ", 1)"
@@ -84,22 +61,12 @@ function freeFormQuery(formData) {
 
 // Cache Update, Get, and Clear
 function updateCache (data) {
-    ui.alert(Object.entries(data))
-    cache.putAll(data, 999);
-}
-
-function testCache() {
-    var data = getFromCache();
-    ui.alert(Object.entries(data))
+    cache.putAll(data);
 }
 
 function getFromCache() {
     var data = cache.getAll(inputs);
     return data
-}
-
-function clearCache() {
-    cache.removeAll(inputs);
 }
 
 

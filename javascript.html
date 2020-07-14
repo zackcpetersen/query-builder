@@ -1,20 +1,26 @@
 <script>
     let filters = []
     let query = '';
+
     function addMessage(error) {
-        const errorDiv = document.getElementById('error');
-        errorDiv.hidden = false;
-        errorDiv.innerHTML = error;
-        errorDiv.style.color = 'red';
+        if (error) {
+            $('#error').show()
+                .html(error)
+                .css('color', 'red');
+        } else {
+            $('#error').hide();
+        }
+
     }
+
     const myRunner = google.script.run.withFailureHandler(addMessage);
 
-    function getFormData(checkSheet=false) {
+    function getFormData(checkSheet = false) {
         // TODO update this to only grab sheet, range and long query
         let formInputs = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
-            .reduce((acc, input) => ({...acc, [input.id]: input.value }), {})
+            .reduce((acc, input) => ({...acc, [input.id]: input.value}), {})
 
-        formInputs.cleanedQuery = formInputs.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g,' ').trim()
+        formInputs.cleanedQuery = formInputs.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g, ' ').trim()
 
         if ((checkSheet) && !(formInputs.dataSheet || formInputs.currentSheet === 'checked')) {
             addMessage('You must select a sheet!')
@@ -33,13 +39,7 @@
 
     function callPicker() {
         getFormData();
-        //myRunner.picker();
-    }
-
-    function queryFilter(filter) {
-        let queryFilter = '';
-        queryFilter.concat(filter.chain, ' ', filter.column, ' ', filter.compareInput, ' ', filter.value, ' ');
-        return queryFilter;
+        myRunner.picker();
     }
 
     function handleFormSubmit() {
@@ -48,38 +48,43 @@
     }
 
     function updateInputs(data) {
-        // I would really love to run this through a loop and fill getElementById's dynamically
-        // but having trouble making it work. It doesn't seem to like the id coming from an
-        // object key (even if converted to a string)
-        // TODO need to update this - maybe? only needs document, range, and longquery
+        // TODO need to update this - maybe? only needs sheet, range, and longquery
         if (data.dataSheet) {
-            const myDiv = document.getElementById('selectedSheetDiv');
             const link = "'" + data.dataSheet + "'"
-            myDiv.hidden = false;
-            myDiv.innerHTML += "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>"
+            $('#selectedSheetDiv').show().html(
+                "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>")
 
-            document.getElementById('dataSheet').value = data.dataSheet;
+            $('#dataSheet').val(data.dataSheet)
         }
         if (data.myRange) {
-            document.getElementById('myRange').value = data.myRange;
+            $('#myRange').val(data.myRange)
         }
         if (data.cleanedQuery) {
-            document.getElementById('longQuery').value = data.cleanedQuery;
+            $('#longQuery').val(data.cleanedQuery)
         }
         if (data.useActiveSheet == 'true') {
-            document.getElementById('currentSheet').checked = true;
+            $('#currentSheet').prop('checked', true)
         }
+        // TODO finish filling in cache data
     }
 
     function updateRange(range) {
-        document.getElementById('myRange').value = range;
+        $('#myRange').val(range);
     }
 
 
     function requiredElements(elements, required) {
-        elements.forEach(function (element) {
-            element.required = required
-        })
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].required = required
+        }
+    }
+
+    function clearFilters() {
+        $('#column').val(null);
+        $('#compareInput').val('=');
+        $('#value').val(null);
+        $('#isCell').prop('checked', false);
+        $('#isDate').prop('checked', false);
     }
 
     function getChain(filters, i) {
@@ -98,12 +103,14 @@
         } else if (filter.cell) {
             return formatForCell(filter.val);
         } else {
-            return filter.val;
+            if (typeof parseInt(filter.val) === 'number' && !isNaN(parseInt(filter.val))) {
+                return filter.val
+            }
+            return addSingleQuotes(filter.val)
         }
     }
 
     function buildWalkthroughQuery(filters) {
-        // TODO may need to check if value is str or int
         let query = 'WHERE '
         for (let i = 0; i < filters.length; i++) {
             let chain = getChain(filters, i)
@@ -113,6 +120,7 @@
         return query;
     }
 
+    // Query value formatting
     function formatForDate(filter) {
         if (filter.cell) {
             return 'date ' + addSingleQuotes('"&text(datevalue(' + filter.val + '), "yyyy-mm-dd")&"')
@@ -129,146 +137,124 @@
         return "'" + value + "'"
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    $(document).ready(() => {
         myRunner.withSuccessHandler(updateInputs).getFromCache();
 
         let filterInputs = {}
         let chain = '';
-        const currentSheetSelector = document.getElementById('currentSheet');
-        currentSheetSelector.value = null;
-        const dynamicRangeSelector = document.getElementById('dynamicRange');
-        const myRangeInput = document.getElementById('myRange');
-        const helpCheckbox = document.getElementById('help');
-        const showFilter = document.getElementById('showFilter');
-        const clearQueryFilters = document.getElementById('clearQueryFilters');
-        const andOrDiv = document.getElementById('andOrDiv');
-        const andButton = document.getElementById('andButton');
-        const orButton = document.getElementById('orButton');
-        const addFilter = document.getElementById('addFilter');
-        const queryFilters = document.getElementById('queryFilters');
-        const closeFilterBox = document.getElementById('closeFilterBox');
-        const seeQuery = document.getElementById('seeQuery');
-        const isDate = document.getElementById('isDate');
-        const dateFormat = document.getElementById('dateFormat');
 
-        // watches checkbox for current sheet
-        currentSheetSelector.addEventListener('change', function () {
-            if (currentSheetSelector.checked) {
-                currentSheetSelector.value = 'checked'
-                document.getElementById('dynamicRangePicker').hidden = false;
-            } else {
-                currentSheetSelector.value = null;
-                document.getElementById('dynamicRangePicker').hidden = true;
-                dynamicRangeSelector.checked = false;
-                myRangeInput.disabled = false;
-            }
-
-            document.getElementById('dynamicRangePicker').hidden = !currentSheetSelector.checked;
+        // watches for query form submit
+        $('#queryForm').on('submit', () => {
+            handleFormSubmit()
         })
 
-        // watches checkbox for dynamicRange checkbox
-        dynamicRangeSelector.addEventListener('change', function () {
-            myRunner.withSuccessHandler(updateRange).getActiveRange();
-            myRangeInput.disabled = dynamicRangeSelector.checked;
+        // watches checkbox for current sheet
+        $('#currentSheet').on('click', () => {
+            if ($('#currentSheet').prop('checked')) {
+                $('#currentSheet').val('checked')
+                myRunner.withSuccessHandler(updateRange).getActiveRange();
+            } else {
+                $('#currentSheet').val(null);
+            }
         })
 
         // watches for helpCheckbox changes
-        helpCheckbox.addEventListener('change', () => {
-            const walkThrough = document.getElementById('queryWalkthrough');
-            const freeForm = document.getElementById('queryFreeForm');
-            if (helpCheckbox.checked) {
-                walkThrough.hidden = false;
-                freeForm.hidden = true;
-                helpCheckbox.value = 'checked';
-                seeQuery.hidden = false;
-                requiredElements(document.querySelectorAll('#queryWalkthrough input'), true);
-                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), false);
+        $('#help').on('change', () => {
+            if ($('#help').prop('checked')) {
+                $('#queryWalkthrough').show();
+                $('#queryFreeForm').hide();
+                $('#help').val('checked');
+                $('#seeQuery').show();
+                requiredElements($('#queryWalkthrough input'), true);
+                requiredElements($('#queryFreeForm textarea'), false);
             } else {
-                walkThrough.hidden = true;
-                freeForm.hidden = false;
-                helpCheckbox.value = null;
-                seeQuery.hidden = true;
-                requiredElements(document.querySelectorAll('#queryWalkthrough input'), false);
-                requiredElements(document.querySelectorAll('#queryFreeForm textarea'), true);
+                $('#queryWalkthrough').hide();
+                $('#queryFreeForm').show();
+                $('#help').val(null);
+                $('#seeQuery').hide();
+                requiredElements($('#queryWalkthrough input'), false);
+                requiredElements($('#queryFreeForm textarea'), true);
             }
         })
 
         // watches for show filter button changes
-        showFilter.addEventListener('click', () => {
-            queryFilters.hidden = false
-            showFilter.disabled = true;
+        $('#showFilter').on('click', () => {
+            $('#queryFilters').show();
+            $('#showFilter').prop('disabled', true)
+
             if (filters.length) {
-                andOrDiv.hidden = false;
+                $('#andOrDiv').show()
             }
         })
 
-        clearQueryFilters.addEventListener('click', (event) => {
-            event.preventDefault();
+        $('#clearQueryFilters').on('click', () => {
             filters = [];
             query = '';
-            seeQuery.innerHTML = filters;
+            $('#seeQuery').html('');
         })
 
-        addFilter.addEventListener('click', (event) => {
-            // TODO need to make sure that this doesn't get empty values if form is incomplete - can use conditional
-            event.preventDefault();
+        $('#addFilter').on('click', () => {
+            if (!($('#column').val() && $('#value').val())) {
+                addMessage('You must fill out both "WHERE" and "VALUE" to continue!');
+                throw 'You must fill out both "WHERE" and "VALUE" to continue!';
+            } else {
+                addMessage('')
+            }
+
             filterInputs = {
                 chain: chain,
-                column: document.getElementById('column').value,
-                compareInput: document.getElementById('compareInput').value,
-                val: document.getElementById('value').value,
-                cell: document.getElementById('isCell').checked,
-                date: document.getElementById('isDate').checked
+                column: $('#column').val(),
+                compareInput: $('#compareInput').val(),
+                val: $('#value').val(),
+                cell: $('#isCell').prop('checked'),
+                date: $('#isDate').prop('checked')
             }
             filters.push(filterInputs);
 
-            // clear filters
             chain = null;
-            document.getElementById('column').value = null;
-            document.getElementById('compareInput').value = "=";
-            document.getElementById('value').value = null;
+            clearFilters();
 
-            queryFilters.hidden = true
-            showFilter.disabled = false;
+            $('#queryFilters').hide();
+            $('#showFilter').prop('disabled', false)
 
+            requiredElements($('#queryFilters input[type=text]'), true)
             query = buildWalkthroughQuery(filters);
-            seeQuery.hidden = false;
-            seeQuery.innerHTML = query;
+
+            //this may not work
+            $('#seeQuery').show()
+                .html(query);
         })
 
-        closeFilterBox.addEventListener('click', () => {
-            queryFilters.hidden = true;
-            showFilter.disabled = false;
-            // clear filters
+        $('#closeFilterBox').on('click', () => {
+            $('#queryFilters').hide();
+            $('#showFilter').prop('disabled', false)
+
             chain = null;
-            document.getElementById('column').value = null;
-            document.getElementById('compareInput').value = "=";
-            document.getElementById('value').value = null;
+            clearFilters();
         })
 
         // and / or button clicks
-        andButton.addEventListener('click', () => {
-            chain = andButton.value;
-            andButton.disabled = true;
-            orButton.disabled = false;
+        $('#andButton').on('click', () => {
+            chain = $('#andButton').val()
+            $('#andButton').prop('disabled', true);
+            $('#orButton').prop('disabled', false);
         })
-        orButton.addEventListener('click', () => {
-            chain = orButton.value;
-            orButton.disabled = true;
-            andButton.disabled = false;
+        $('#orButton').on('click', () => {
+            chain = $('#orButton').val()
+            $('#andButton').prop('disabled', false);
+            $('#orButton').prop('disabled', true);
         })
 
-        // add hover message on isDate
-        isDate.addEventListener('click', () => {
-            if (isDate.checked) {
-                dateFormat.hidden = false;
+        // add message on isDate
+        $('#isDate').on('click', () => {
+            if ($('#isDate').prop('checked')) {
+                $('#dateFormat').show()
             } else {
-                dateFormat.hidden = true;
+                $('#dateFormat').hide()
             }
         })
-    });
+    })
 
 
     // TODO refactor event listener functions to call named functions instead of anonymous ones
-    // TODO switch everything to jQuery?
 </script>
