@@ -30,6 +30,34 @@ function getActiveRange() {
     return activeSheet + "!" + range
 }
 
+// Cache Update, Get, and Clear
+function updateCache (data) {
+    cache.putAll(data);
+}
+
+function getFromCache() {
+    var data = cache.getAll(inputs);
+    return data
+}
+
+// Include function allowing files to access other files
+function include(filename) {
+    return HtmlService.createHtmlOutputFromFile(filename)
+        .getContent();
+}
+
+// For error messages
+function displayError(error) {
+    ui.alert(error)
+}
+
+// OAuth Token for verification and authentication
+function getOAuthToken() {
+    DriveApp.getRootFolder();
+    return ScriptApp.getOAuthToken();
+}
+
+
 class Query {
     constructor(formData, filters) {
         this.data = formData.data;
@@ -71,32 +99,4 @@ function addQuery(formData, filters) {
     let myQuery = new Query(formData, filters)
     myQuery.buildQuery();
     myQuery.addQueryToSheet();
-}
-
-// Cache Update, Get, and Clear
-function updateCache (data) {
-    cache.putAll(data);
-}
-
-function getFromCache() {
-    var data = cache.getAll(inputs);
-    return data
-}
-
-
-// OAuth Token for verification and authentication
-function getOAuthToken() {
-    DriveApp.getRootFolder();
-    return ScriptApp.getOAuthToken();
-}
-
-// Include function allowing files to access other files
-function include(filename) {
-    return HtmlService.createHtmlOutputFromFile(filename)
-        .getContent();
-}
-
-// For error messages
-function displayError(error) {
-    ui.alert(error)
 }

@@ -1,7 +1,4 @@
 <script>
-    // let filters = []
-    // let query = '';
-
     class QueryFilters {
         constructor() {
             this.filters = [];
@@ -72,7 +69,6 @@
     const myRunner = google.script.run.withFailureHandler(addMessage);
 
     function getFormData(checkSheet = false) {
-        // TODO update this to only grab sheet, range and long query
         let formInputs = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
             .reduce((acc, input) => ({...acc, [input.id]: input.value}), {})
 
@@ -104,7 +100,6 @@
     }
 
     function updateInputs(data) {
-        // TODO need to update this - maybe? only needs sheet, range, and longquery
         if (data.dataSheet) {
             const link = "'" + data.dataSheet + "'"
             $('#selectedSheetDiv').show().html(
@@ -147,9 +142,6 @@
         myRunner.withSuccessHandler(updateInputs).getFromCache();
         let myFilters = new QueryFilters()
 
-        // let filterInputs = {}
-        // let chain = '';
-
         // watches for query form submit
         $('#queryForm').on('submit', () => {
             handleFormSubmit(myFilters.buildFilters())
@@ -172,24 +164,25 @@
                 $('#queryFreeForm').hide();
                 $('#help').val('checked');
                 $('#seeQuery').show();
-                // requiredElements($('#queryWalkthrough input'), true);
-                // requiredElements($('#queryFreeForm textarea'), false);
+                requiredElements($('#queryWalkthrough input'), true);
+                requiredElements($('#queryFreeForm textarea'), false);
             } else {
                 $('#queryWalkthrough').hide();
                 $('#queryFreeForm').show();
                 $('#help').val(null);
                 $('#seeQuery').hide();
-                // requiredElements($('#queryWalkthrough input'), false);
-                // requiredElements($('#queryFreeForm textarea'), true);
+                requiredElements($('#queryWalkthrough input'), false);
+                requiredElements($('#queryFreeForm textarea'), true);
             }
         })
 
         // watches for show filter button changes
         $('#showFilter').on('click', () => {
             $('#queryFilters').show();
-            $('#showFilter').prop('disabled', true)
+            $('#showFilter').prop('disabled', true);
+            $('#submit').prop('disabled', true);
 
-            // add filters to cache?
+            // TODO add filters to cache?
             if (myFilters.filters.length) {
                 $('#andOrDiv').show()
             }
@@ -208,6 +201,8 @@
                 addMessage('')
             }
 
+            $('#submit').prop('disabled', false);
+
             let filterInputs = {
                 chain: myFilters.chain,
                 column: $('#column').val(),
@@ -225,7 +220,7 @@
             $('#queryFilters').hide();
             $('#showFilter').prop('disabled', false)
 
-            // requiredElements($('#queryFilters input[type=text]'), true)
+            requiredElements($('#queryFilters input[type=text]'), true)
 
             $('#seeQuery').show()
                 .html(myFilters.buildFilters());
@@ -234,6 +229,7 @@
         $('#closeFilterBox').on('click', () => {
             $('#queryFilters').hide();
             $('#showFilter').prop('disabled', false)
+            $('#submit').prop('disabled', false);
 
             myFilters.chain = null;
             clearFilters();
