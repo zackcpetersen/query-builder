@@ -1,7 +1,7 @@
 // Global variables
 const ui = SpreadsheetApp.getUi();
 const cache = CacheService.getUserCache();
-const inputs = ['dataSheet', 'currentSheet', 'range', 'cleanedQuery', 'sheetName', 'useActiveSheet']
+const inputs = ['dataSheet', 'range', 'cleanedQuery']
 
 function onOpen() {
     ui.createMenu('Queries')
@@ -36,8 +36,7 @@ function updateCache (data) {
 }
 
 function getFromCache() {
-    var data = cache.getAll(inputs);
-    return data
+    return cache.getAll(inputs);
 }
 
 // Include function allowing files to access other files

@@ -55,6 +55,9 @@
         }
     }
 
+    let myFilters = new QueryFilters()
+    const myRunner = google.script.run.withFailureHandler(addMessage);
+
     function addMessage(error) {
         if (error) {
             $('#error').show()
@@ -66,26 +69,24 @@
 
     }
 
-    const myRunner = google.script.run.withFailureHandler(addMessage);
-
     function getFormData(checkSheet = false) {
-        let formInputs = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
+        let formData = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
             .reduce((acc, input) => ({...acc, [input.id]: input.value}), {})
 
-        formInputs.cleanedQuery = formInputs.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g, ' ').trim()
+        formData.cleanedQuery = formData.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g, ' ').trim()
 
-        if ((checkSheet) && !(formInputs.dataSheet || formInputs.currentSheet === 'checked')) {
+        if ((checkSheet) && !(formData.dataSheet || formData.currentSheet === 'checked')) {
             addMessage('You must select a sheet!')
             throw 'You must select a sheet!';
         } else {
-            if (formInputs.currentSheet === 'checked') {
-                formInputs.useActiveSheet = 'true';
-                formInputs.dataSheet = null;
+            if (formData.currentSheet === 'checked') {
+                formData.useActiveSheet = 'true';
+                formData.dataSheet = null;
             } else {
-                formInputs.useActiveSheet = 'false';
+                formData.useActiveSheet = 'false';
             }
 
-            return formInputs
+            return formData
         }
     }
 
@@ -94,29 +95,26 @@
         myRunner.picker();
     }
 
-    function handleFormSubmit(query) {
+    function handleFormSubmit(filters) {
         const formData = getFormData(true);
-        myRunner.addQuery(formData, query)
+        myRunner.updateCache(formData)
+        // myRunner.addQuery(formData, filters)
     }
 
     function updateInputs(data) {
         if (data.dataSheet) {
             const link = "'" + data.dataSheet + "'"
             $('#selectedSheetDiv').show().html(
-                "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>")
+                "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>");
 
-            $('#dataSheet').val(data.dataSheet)
+            $('#dataSheet').val(data.dataSheet);
         }
         if (data.range) {
-            $('#range').val(data.range)
+            $('#range').val(data.range);
         }
         if (data.cleanedQuery) {
-            $('#longQuery').val(data.cleanedQuery)
+            $('#longQuery').val(data.cleanedQuery);
         }
-        if (data.useActiveSheet == 'true') {
-            $('#currentSheet').prop('checked', true)
-        }
-        // TODO finish filling in cache data
     }
 
     function updateRange(range) {
@@ -138,9 +136,8 @@
         $('#isDate').prop('checked', false);
     }
 
-    $(document).ready(() => {
+    $(function() {
         myRunner.withSuccessHandler(updateInputs).getFromCache();
-        let myFilters = new QueryFilters()
 
         // watches for query form submit
         $('#queryForm').on('submit', () => {
@@ -182,7 +179,6 @@
             $('#showFilter').prop('disabled', true);
             $('#submit').prop('disabled', true);
 
-            // TODO add filters to cache?
             if (myFilters.filters.length) {
                 $('#andOrDiv').show()
             }
