@@ -1,7 +1,7 @@
 // Global variables
 const ui = SpreadsheetApp.getUi();
 const cache = CacheService.getUserCache();
-const inputs = ['dataSheet', 'currentSheet', 'myRange', 'cleanedQuery', 'sheetName', 'useActiveSheet']
+const inputs = ['dataSheet', 'currentSheet', 'range', 'cleanedQuery', 'sheetName', 'useActiveSheet']
 
 function onOpen() {
     ui.createMenu('Queries')
@@ -22,7 +22,7 @@ function picker() {
     ui.showModalDialog(html, 'Pick Your Sheet');
 }
 
-// Get data ranges from sheet
+// Get data range from sheet
 function getActiveRange() {
     const sheet = SpreadsheetApp.getActiveSheet()
     const activeSheet = sheet.getName();
@@ -30,33 +30,47 @@ function getActiveRange() {
     return activeSheet + "!" + range
 }
 
-function buildQuery(formInputs, query) {
-    if (formInputs.help) {
-        walkthroughQuery(formInputs, query)
-    } else {
-        freeFormQuery(formInputs)
+class Query {
+    constructor(formData, filters) {
+        this.data = formData.data;
+        this.range = formData.range;
+        this.longQuery = formData.longQuery;
+        this.filters = filters;
+        this.help = formData.help;
+        this.useActiveSheet = formData.useActiveSheet;
+        this.selectInput = formData.selectInput;
+        this.cleanedQuery = formData.cleanedQuery;
+    }
+    buildQuery() {
+        if (this.help) {
+            this.query = this.walkthroughQuery();
+        } else {
+            this.query = this.freeFormQuery();
+        }
+        return this.query;
+    }
+    walkthroughQuery() {
+        let select = 'SELECT ' + this.selectInput + ' ';
+        let query = select + this.filters;
+        return "=QUERY(" + this.range + ', "' + query + '"' + ", 1)"
+    }
+    freeFormQuery() {
+        if (this.useActiveSheet) {
+            return "=QUERY(" + this.range + ', "' + this.cleanedQuery + '"' + ", 1)"
+        }
+        let dataRange = 'IMPORTRANGE(' + '"' + this.data + '", ' + '"' + this.range + '")';
+        return "=QUERY(" + dataRange + ', "' + this.cleanedQuery + '"' + ", 1)"
+    }
+    addQueryToSheet() {
+        let newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
+        newSheet.getRange(1, 1).setValue(this.query);
     }
 }
 
-function walkthroughQuery(formInputs, query) {
-    let select = 'SELECT ' + formInputs.selectInput + ' ';
-    query = select + query;
-    const queryFunction = "=QUERY(" + formInputs.myRange + ', "' + query + '"' + ", 1)"
-    const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
-    newSheet.getRange(1, 1).setValue(queryFunction);
-}
-
-function freeFormQuery(formData) {
-    let queryFunction;
-    if (formData.useActiveSheet) {
-        queryFunction = "=QUERY(" + formData.myRange + ', "' + formData.cleanedQuery + '"' + ", 1)"
-    } else {
-        let dataRange = 'IMPORTRANGE(' + '"' + formData.dataSheet + '", ' + '"' + formData.myRange + '")';
-        queryFunction = "=QUERY(" + dataRange + ', "' + formData.cleanedQuery + '"' + ", 1)"
-    }
-
-    var newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
-    newSheet.getRange(1, 1).setValue(queryFunction);
+function addQuery(formData, filters) {
+    let myQuery = new Query(formData, filters)
+    myQuery.buildQuery();
+    myQuery.addQueryToSheet();
 }
 
 // Cache Update, Get, and Clear

@@ -1,6 +1,62 @@
 <script>
-    let filters = []
-    let query = '';
+    // let filters = []
+    // let query = '';
+
+    class QueryFilters {
+        constructor() {
+            this.filters = [];
+            this.chain = '';
+        }
+        addFilter(filter) {
+            this.filters.push(filter)
+        }
+        clearFilters() {
+            this.filters = [];
+        }
+        buildFilters() {
+            let query = 'WHERE '
+            for (let i = 0; i < this.filters.length; i++) {
+                let chain = this.getChain(i)
+                let val = this.formatValue(this.filters[i])
+                query += ''.concat(chain, ' ', this.filters[i].column.toUpperCase(), ' ', this.filters[i].compareInput, ' ', val, ' ')
+            }
+            return query;
+        }
+        getChain(index) {
+            if (index === 0) {
+                return ''
+            } else if (this.filters[index].chain) {
+                return this.filters[index].chain;
+            } else {
+                return 'AND'
+            }
+        }
+        formatValue(filter) {
+            if (filter.date) {
+                return this.formatForDate(filter);
+            } else if (filter.cell) {
+                return this.formatForCell(filter.val);
+            } else {
+                if (typeof parseInt(filter.val) === 'number' && !isNaN(parseInt(filter.val))) {
+                    return filter.val
+                }
+                return this.addSingleQuotes(filter.val)
+            }
+        }
+        formatForDate(filter) {
+            if (filter.cell) {
+                return 'date ' + this.addSingleQuotes('"&text(datevalue(' + filter.val + '), "yyyy-mm-dd")&"')
+            } else {
+                return 'date ' + this.addSingleQuotes(filter.val)
+            }
+        }
+        formatForCell(value) {
+            return "'\"&" + value + "&\"'"
+        }
+        addSingleQuotes(value) {
+            return "'" + value + "'"
+        }
+    }
 
     function addMessage(error) {
         if (error) {
@@ -42,9 +98,9 @@
         myRunner.picker();
     }
 
-    function handleFormSubmit() {
-        const formInputs = getFormData(true);
-        myRunner.buildQuery(formInputs, query)
+    function handleFormSubmit(query) {
+        const formData = getFormData(true);
+        myRunner.addQuery(formData, query)
     }
 
     function updateInputs(data) {
@@ -56,8 +112,8 @@
 
             $('#dataSheet').val(data.dataSheet)
         }
-        if (data.myRange) {
-            $('#myRange').val(data.myRange)
+        if (data.range) {
+            $('#range').val(data.range)
         }
         if (data.cleanedQuery) {
             $('#longQuery').val(data.cleanedQuery)
@@ -69,7 +125,7 @@
     }
 
     function updateRange(range) {
-        $('#myRange').val(range);
+        $('#range').val(range);
     }
 
 
@@ -87,65 +143,16 @@
         $('#isDate').prop('checked', false);
     }
 
-    function getChain(filters, i) {
-        if (i === 0) {
-            return ''
-        } else if (filters[i].chain) {
-            return filters[i].chain;
-        } else {
-            return 'AND'
-        }
-    }
-
-    function formatValue(filter) {
-        if (filter.date) {
-            return formatForDate(filter);
-        } else if (filter.cell) {
-            return formatForCell(filter.val);
-        } else {
-            if (typeof parseInt(filter.val) === 'number' && !isNaN(parseInt(filter.val))) {
-                return filter.val
-            }
-            return addSingleQuotes(filter.val)
-        }
-    }
-
-    function buildWalkthroughQuery(filters) {
-        let query = 'WHERE '
-        for (let i = 0; i < filters.length; i++) {
-            let chain = getChain(filters, i)
-            let val = formatValue(filters[i])
-            query += ''.concat(chain, ' ', filters[i].column.toUpperCase(), ' ', filters[i].compareInput, ' ', val, ' ')
-        }
-        return query;
-    }
-
-    // Query value formatting
-    function formatForDate(filter) {
-        if (filter.cell) {
-            return 'date ' + addSingleQuotes('"&text(datevalue(' + filter.val + '), "yyyy-mm-dd")&"')
-        } else {
-            return 'date ' + addSingleQuotes(filter.val)
-        }
-    }
-
-    function formatForCell(value) {
-        return "'\"&" + value + "&\"'"
-    }
-
-    function addSingleQuotes(value) {
-        return "'" + value + "'"
-    }
-
     $(document).ready(() => {
         myRunner.withSuccessHandler(updateInputs).getFromCache();
+        let myFilters = new QueryFilters()
 
-        let filterInputs = {}
-        let chain = '';
+        // let filterInputs = {}
+        // let chain = '';
 
         // watches for query form submit
         $('#queryForm').on('submit', () => {
-            handleFormSubmit()
+            handleFormSubmit(myFilters.buildFilters())
         })
 
         // watches checkbox for current sheet
@@ -165,15 +172,15 @@
                 $('#queryFreeForm').hide();
                 $('#help').val('checked');
                 $('#seeQuery').show();
-                requiredElements($('#queryWalkthrough input'), true);
-                requiredElements($('#queryFreeForm textarea'), false);
+                // requiredElements($('#queryWalkthrough input'), true);
+                // requiredElements($('#queryFreeForm textarea'), false);
             } else {
                 $('#queryWalkthrough').hide();
                 $('#queryFreeForm').show();
                 $('#help').val(null);
                 $('#seeQuery').hide();
-                requiredElements($('#queryWalkthrough input'), false);
-                requiredElements($('#queryFreeForm textarea'), true);
+                // requiredElements($('#queryWalkthrough input'), false);
+                // requiredElements($('#queryFreeForm textarea'), true);
             }
         })
 
@@ -182,14 +189,14 @@
             $('#queryFilters').show();
             $('#showFilter').prop('disabled', true)
 
-            if (filters.length) {
+            // add filters to cache?
+            if (myFilters.filters.length) {
                 $('#andOrDiv').show()
             }
         })
 
         $('#clearQueryFilters').on('click', () => {
-            filters = [];
-            query = '';
+            myFilters.clearFilters();
             $('#seeQuery').html('');
         })
 
@@ -201,46 +208,45 @@
                 addMessage('')
             }
 
-            filterInputs = {
-                chain: chain,
+            let filterInputs = {
+                chain: myFilters.chain,
                 column: $('#column').val(),
                 compareInput: $('#compareInput').val(),
                 val: $('#value').val(),
                 cell: $('#isCell').prop('checked'),
                 date: $('#isDate').prop('checked')
             }
-            filters.push(filterInputs);
+            myFilters.addFilter(filterInputs);
 
-            chain = null;
+
+            myFilters.chain = null;
             clearFilters();
 
             $('#queryFilters').hide();
             $('#showFilter').prop('disabled', false)
 
-            requiredElements($('#queryFilters input[type=text]'), true)
-            query = buildWalkthroughQuery(filters);
+            // requiredElements($('#queryFilters input[type=text]'), true)
 
-            //this may not work
             $('#seeQuery').show()
-                .html(query);
+                .html(myFilters.buildFilters());
         })
 
         $('#closeFilterBox').on('click', () => {
             $('#queryFilters').hide();
             $('#showFilter').prop('disabled', false)
 
-            chain = null;
+            myFilters.chain = null;
             clearFilters();
         })
 
         // and / or button clicks
         $('#andButton').on('click', () => {
-            chain = $('#andButton').val()
+            myFilters.chain = $('#andButton').val()
             $('#andButton').prop('disabled', true);
             $('#orButton').prop('disabled', false);
         })
         $('#orButton').on('click', () => {
-            chain = $('#orButton').val()
+            myFilters.chain = $('#orButton').val()
             $('#andButton').prop('disabled', false);
             $('#orButton').prop('disabled', true);
         })
@@ -254,7 +260,4 @@
             }
         })
     })
-
-
-    // TODO refactor event listener functions to call named functions instead of anonymous ones
 </script>
