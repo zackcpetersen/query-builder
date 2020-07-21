@@ -139,6 +139,11 @@
     $(function() {
         myRunner.withSuccessHandler(updateInputs).getFromCache();
 
+        // open helpBox modal
+        $('#helpBox').on('click', () => {
+            myRunner.helpBox();
+        })
+
         // watches for query form submit
         $('#queryForm').on('submit', () => {
             handleFormSubmit(myFilters.buildFilters())
@@ -178,6 +183,7 @@
             $('#queryFilters').show();
             $('#showFilter').prop('disabled', true);
             $('#submit').prop('disabled', true);
+            $('#dateFormat').hide()
 
             if (myFilters.filters.length) {
                 $('#andOrDiv').show()

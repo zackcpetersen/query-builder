@@ -8,18 +8,25 @@ function onOpen() {
         .addItem('QueryMe', 'showSidebar')
         .addItem('Clear Cache', 'clearCache')
         .addItem('Test Cache', 'testCache')
+        .addItem('Help Box', 'helpBox')
         .addToUi();
 }
 
 // HTML Builders
 function showSidebar() {
-    var html = HtmlService.createTemplateFromFile('sidebar');
-    ui.showSidebar(html.evaluate().setTitle('QueryMe'));
+    const html = HtmlService.createTemplateFromFile('sidebar');
+    ui.showSidebar(html.evaluate().setTitle('QueryBuilder'));
 }
 
 function picker() {
-    var html = HtmlService.createTemplateFromFile('picker').evaluate();
-    ui.showModalDialog(html, 'Pick Your Sheet');
+    const html = HtmlService.createTemplateFromFile('picker').evaluate();
+    ui.showModalDialog(html, 'Pick Your SPREADSHEET');
+}
+
+function helpBox() {
+    const html = HtmlService.createTemplateFromFile('helpbox').evaluate();
+    // const html = HtmlService.createHtmlOutput('<h1>Hello world</h1>')
+    ui.showModelessDialog(html, "How to use QueryBuilder")
 }
 
 // Get data range from sheet

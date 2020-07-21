@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target='_top'>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+</head>
+<body>
+<p>Here is some terminology used in this document.</p>
+<ul>
+    <li>SPREADSHEET is the entire Spreadsheet document, can contain multiple SHEETS and lots of cells / data</li>
+    <li>SHEET is a tab within the SPREADSHEET. There can be many SHEETS in a single SPREADSHEET</li>
+    <li>DRIVE is your Google Drive - where you can store other SPREADSHEETS</li>
+    <li>QUERY is the SQL-like Query where all the magic happens</li>
+</ul>
+
+<h3>Steps to use:</h3>
+<ol>
+    <li>Pick the SPREADSHEET you would like to run your Query against - (Use current SPREADSHEET, Select a SPREADSHEET from your Drive)</li>
+    <li>Insert a range in that SPREADSHEET - Insert the Sheet name, followed by an explanation point (!) and then the cells you wish to include - (Sheet1!A:Z, MySheet!A200:B300, etc..)</li>
+    <li>Select the columns you would like to be included in the Query - you can use a star (*) to select all of them, or a list of the columns you would like to include separated by commas (A,B,C,D)</li>
+    <li>Now click “Add New Filter” - here, you’ll need to add one of the columns that you included in the previous step - only use ONE per filter (A).</li>
+    <li>Then you’ll choose a comparison operator - do you want the value to equal (=), not equal (!=), be greater than (>), less than (&lt;) </li>
+    <li>Finally, insert the value you would like to compare. Note that =, !=, &lt;, >, &lt;=, >=, can ONLY be used when comparing with numbers, not strings.</li>
+    <li>Click “ADD” - Congratulations! You’ve made your first filter! Now you can “Add New Filter” again, and they will be used together for more advanced Queries, or click “CREATE QUERY” and you’re done.</li>
+</ol>
+
+<h4>Common Issues</h4>
+<p>Make sure your data types are the same! If one of your filters is A = 1, make sure that in the sheet, 1 is set to either “Automatic” or “Number.”</p>
+<p>If your query is for data in another sheet in your drive, you’ll need to swap the column labels (A, B, C, D) with their numbers (Col1, Col2, Col3, Col4)</p>
+
+<h4>Helpful Links</h4>
+<ul>
+    <li><a href="https://support.google.com/docs/answer/3093343?hl=en" target="_blank">Google Query Function</a></li>
+    <li><a href="https://developers.google.com/chart/interactive/docs/querylanguage#language-clauses" target="_blank">Query Language Syntax</a></li>
+</ul>
+</body>
+</html>

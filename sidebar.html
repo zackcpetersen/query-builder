@@ -10,17 +10,18 @@
 <div class='form-group center top full-width'>
     <div class='form-styles'>
         <h1 class='center'>QueryBuilder</h1>
+        <p id="helpBox" class="help-box">Help Using This Tool</p>
     </div>
 
     <br>
 
     <form id='queryForm'>
         <div class='form-styles'>
-            <button type='button' onClick='callPicker()' class='blue data-sheet'>Select a Data Sheet</button>
+            <button type='button' onClick='callPicker()' class='blue data-sheet'>Select a SPREADSHEET</button>
             <input type='hidden' id='dataSheet'>
             <div id="selectedSheetDiv" hidden></div>
             <input type="checkbox" id="currentSheet">
-            <label for="currentSheet">Use Current Sheet</label>
+            <label for="currentSheet">Use Current SPREADSHEET</label>
         </div>
 
         <hr>
@@ -40,7 +41,7 @@
         <div class='query form-styles' id="queryFreeForm" hidden>
             <label for="longQuery">Insert Query Here</label>
             <textarea id='longQuery' rows='5'
-                      placeholder="SELECT * &#10;WHERE Col1 = '1'&#10;AND Col3 != '0'"
+                      placeholder="SELECT * &#10;WHERE A = 1&#10;AND C != null"
             ></textarea>
         </div>
 
@@ -71,12 +72,18 @@
                 </select>
                 <br>
                 <strong><label for="value">VALUE</label></strong>
+
                 <input type="text" id="value" class="value" placeholder="1">
-                <small id="dateFormat" hidden>Must be in yyyy-mm-dd format</small>
-                <label for="isCell">Is Value a Cell?</label>
-                <input type="checkbox" id="isCell">
-                <label for="isDate">Is Value a Date?</label>
-                <input type="checkbox" id="isDate" title="Use yyyy-mm-dd format">
+                <small id="dateFormat" class="mb" hidden>Must be in yyyy-mm-dd format</small>
+
+                <br>
+                <div class="cell-date mb">
+                    <input type="checkbox" id="isCell">
+                    <label for="isCell">Is Value a Cell?</label>
+                    <br>
+                    <input type="checkbox" id="isDate" title="Use yyyy-mm-dd format">
+                    <label for="isDate">Is Value a Date?</label>
+                </div>
                 <br>
                 <button id="addFilter" class="blue" type="button">ADD</button>
                 <button id="closeFilterBox" type="button">Close</button>
@@ -156,7 +163,22 @@
 
     .query-filters {
         border: black 1px solid;
-        padding: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .cell-date {
+        display: inline-block;
+    }
+    small {
+        display: inline-block;
+        color: darkred;
+    }
+    .mb {
+        margin-bottom: 10px;
+    }
+    .help-box {
+        cursor: pointer;
+        color: blue;
     }
 </style>
 </html>
