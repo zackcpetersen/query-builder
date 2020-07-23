@@ -38,8 +38,8 @@
             <label for="help">Help Me Out</label>
         </div>
 
-        <div class='query form-styles' id="queryFreeForm" hidden>
-            <label for="longQuery">Insert Query Here</label>
+        <div class='query form-styles left' id="queryFreeForm" hidden>
+            <h3>Insert Query Here</h3>
             <textarea id='longQuery' rows='5'
                       placeholder="SELECT * &#10;WHERE A = 1&#10;AND C != null"
             ></textarea>
@@ -89,22 +89,12 @@
                 <button id="closeFilterBox" type="button">Close</button>
             </div>
         </div>
-
-        <!---
-        TODO -
-        Need to add help button and explain some basic things.
-        - How to write query (wrap in parenthases)
-        - How to include specific range
-        - Use Col1, Col2 instead of A, B
-        - Data types must match
-        etc...
-        --->
         <hr>
         <div id="seeQuery" class="form-styles left" hidden></div>
-        <div id="error" class="form-styles" hidden></div>
         <hr>
+        <div id="error" class="form-styles" hidden></div>
 
-        <button id='submit' class='create' type="submit">CREATE QUERY</button>
+        <button onclick="handleFormSubmit()" id='submit' class='create' type="button">CREATE QUERY</button>
         <button onClick='google.script.host.close()' type="button">Close</button>
     </form>
 </div>

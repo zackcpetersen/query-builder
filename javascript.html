@@ -95,10 +95,11 @@
         myRunner.picker();
     }
 
-    function handleFormSubmit(filters) {
+    function handleFormSubmit() {
+        const filters = myFilters.buildFilters()
         const formData = getFormData(true);
         myRunner.updateCache(formData)
-        // myRunner.addQuery(formData, filters)
+        myRunner.addQuery(formData, filters)
     }
 
     function updateInputs(data) {
@@ -142,11 +143,6 @@
         // open helpBox modal
         $('#helpBox').on('click', () => {
             myRunner.helpBox();
-        })
-
-        // watches for query form submit
-        $('#queryForm').on('submit', () => {
-            handleFormSubmit(myFilters.buildFilters())
         })
 
         // watches checkbox for current sheet
@@ -200,7 +196,7 @@
                 addMessage('You must fill out both "WHERE" and "VALUE" to continue!');
                 throw 'You must fill out both "WHERE" and "VALUE" to continue!';
             } else {
-                addMessage('')
+                addMessage(null)
             }
 
             $('#submit').prop('disabled', false);
@@ -230,6 +226,7 @@
 
         $('#closeFilterBox').on('click', () => {
             $('#queryFilters').hide();
+            $('#error').hide();
             $('#showFilter').prop('disabled', false)
             $('#submit').prop('disabled', false);
 

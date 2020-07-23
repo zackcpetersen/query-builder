@@ -5,10 +5,7 @@ const inputs = ['dataSheet', 'range', 'cleanedQuery']
 
 function onOpen() {
     ui.createMenu('Queries')
-        .addItem('QueryMe', 'showSidebar')
-        .addItem('Clear Cache', 'clearCache')
-        .addItem('Test Cache', 'testCache')
-        .addItem('Help Box', 'helpBox')
+        .addItem('QueryBuilder', 'showSidebar')
         .addToUi();
 }
 
