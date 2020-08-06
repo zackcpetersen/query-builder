@@ -17,7 +17,7 @@
 
     <form id='queryForm'>
         <div class='form-styles'>
-            <button type='button' onClick='callPicker()' class='blue data-sheet'>Select a SPREADSHEET</button>
+            <button type='button' id="callPicker" class='blue data-sheet'>Select a SPREADSHEET</button>
             <input type='hidden' id='dataSheet'>
             <div id="selectedSheetDiv" hidden></div>
             <input type="checkbox" id="currentSheet">
@@ -94,8 +94,8 @@
         <hr>
         <div id="error" class="form-styles" hidden></div>
 
-        <button onclick="handleFormSubmit()" id='submit' class='create' type="button">CREATE QUERY</button>
-        <button onClick='google.script.host.close()' type="button">Close</button>
+        <button id='submit' class='create' type="button">CREATE QUERY</button>
+        <button id="closeSidebar" type="button">Close</button>
     </form>
 </div>
 </body>

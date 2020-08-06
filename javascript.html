@@ -1,4 +1,155 @@
 <script>
+    const myRunner = google.script.run.withFailureHandler(addMessage);
+
+    function addMessage(error) {
+        if (error) {
+            $('#error').show()
+                .html(error)
+                .css('color', 'red');
+        } else {
+            $('#error').hide();
+        }
+    }
+
+    $(function() {
+        let myFilters = new QueryFilters()
+        let domInputs = new DOMInputs()
+        myRunner.withSuccessHandler(domInputs.updateInputs).getCache();
+
+
+
+        // handle form submit
+        $('#submit').on('click', () => {
+            const filters = myFilters.buildFilters()
+            domInputs.handleFormSubmit(filters)
+        })
+
+        // close sidebar
+        $('#closeSidebar').on('click', () => {
+            google.script.host.close()
+        })
+
+        // call picker to select new data sheet
+        $('#callPicker').on('click', () => {
+            domInputs.callPicker()
+        })
+
+        // open helpBox modal
+        $('#helpBox').on('click', () => {
+            myRunner.helpBox();
+        })
+
+        // watches checkbox for current sheet
+        $('#currentSheet').on('click', () => {
+            if ($('#currentSheet').prop('checked')) {
+                $('#currentSheet').val('checked')
+                myRunner.withSuccessHandler(domInputs.updateRange).getActiveRange();
+            } else {
+                $('#currentSheet').val(null);
+            }
+        })
+
+        // watches for helpCheckbox changes
+        $('#help').on('change', () => {
+            if ($('#help').prop('checked')) {
+                $('#queryWalkthrough').show();
+                $('#queryFreeForm').hide();
+                $('#help').val('checked');
+                $('#seeQuery').show();
+                domInputs.requiredElements($('#queryWalkthrough input'), true);
+                domInputs.requiredElements($('#queryFreeForm textarea'), false);
+            } else {
+                $('#queryWalkthrough').hide();
+                $('#queryFreeForm').show();
+                $('#help').val(null);
+                $('#seeQuery').hide();
+                domInputs.requiredElements($('#queryWalkthrough input'), false);
+                domInputs.requiredElements($('#queryFreeForm textarea'), true);
+            }
+        })
+
+        // watches for show filter button changes
+        $('#showFilter').on('click', () => {
+            $('#queryFilters').show();
+            $('#showFilter').prop('disabled', true);
+            $('#submit').prop('disabled', true);
+            $('#dateFormat').hide()
+
+            if (myFilters.filters.length) {
+                $('#andOrDiv').show()
+            }
+        })
+
+        $('#clearQueryFilters').on('click', () => {
+            myFilters.clearFilters();
+            $('#seeQuery').html('');
+        })
+
+        $('#addFilter').on('click', () => {
+            if (!($('#column').val() && $('#value').val())) {
+                addMessage('You must fill out both "WHERE" and "VALUE" to continue!');
+                throw 'You must fill out both "WHERE" and "VALUE" to continue!';
+            } else {
+                addMessage(null)
+            }
+
+            $('#submit').prop('disabled', false);
+
+            let filterInputs = {
+                chain: myFilters.chain,
+                column: $('#column').val(),
+                compareInput: $('#compareInput').val(),
+                val: $('#value').val(),
+                cell: $('#isCell').prop('checked'),
+                date: $('#isDate').prop('checked')
+            }
+            myFilters.addFilter(filterInputs);
+
+
+            myFilters.chain = null;
+            domInputs.clearFilters();
+
+            $('#queryFilters').hide();
+            $('#showFilter').prop('disabled', false)
+
+            domInputs.requiredElements($('#queryFilters input[type=text]'), true)
+
+            $('#seeQuery').show()
+                .html(myFilters.buildFilters());
+        })
+
+        $('#closeFilterBox').on('click', () => {
+            $('#queryFilters').hide();
+            $('#error').hide();
+            $('#showFilter').prop('disabled', false)
+            $('#submit').prop('disabled', false);
+
+            myFilters.chain = null;
+            domInputs.clearFilters();
+        })
+
+        // and / or button clicks
+        $('#andButton').on('click', () => {
+            myFilters.chain = $('#andButton').val()
+            $('#andButton').prop('disabled', true);
+            $('#orButton').prop('disabled', false);
+        })
+        $('#orButton').on('click', () => {
+            myFilters.chain = $('#orButton').val()
+            $('#andButton').prop('disabled', false);
+            $('#orButton').prop('disabled', true);
+        })
+
+        // add message on isDate
+        $('#isDate').on('click', () => {
+            if ($('#isDate').prop('checked')) {
+                $('#dateFormat').show()
+            } else {
+                $('#dateFormat').hide()
+            }
+        })
+    })
+
     class QueryFilters {
         constructor() {
             this.filters = [];
@@ -55,204 +206,66 @@
         }
     }
 
-    let myFilters = new QueryFilters()
-    const myRunner = google.script.run.withFailureHandler(addMessage);
 
-    function addMessage(error) {
-        if (error) {
-            $('#error').show()
-                .html(error)
-                .css('color', 'red');
-        } else {
-            $('#error').hide();
+    class DOMInputs {
+        clearFilters() {
+            $('#column').val(null);
+            $('#compareInput').val('=');
+            $('#value').val(null);
+            $('#isCell').prop('checked', false);
+            $('#isDate').prop('checked', false);
         }
+        requiredElements(elements, required) {
+            for (let i = 0; i < elements.length; i++) {
+                elements[i].required = required
+            }
+        }
+        updateRange(range) {
+            $('#range').val(range);
+        }
+        updateInputs(data) {
+            if (data.dataSheet) {
+                const link = "'" + data.dataSheet + "'"
+                $('#selectedSheetDiv').show().html(
+                    "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>");
 
-    }
+                $('#dataSheet').val(data.dataSheet);
+            }
+            if (data.range) {
+                $('#range').val(data.range);
+            }
+            if (data.cleanedQuery) {
+                $('#longQuery').val(data.cleanedQuery);
+            }
+        }
+        handleFormSubmit(filters) {
+            // const filters = myFilters.buildFilters()
+            const formData = this.getFormData(true);
+            myRunner.updateCache(formData)
+            myRunner.addQuery(formData, filters)
+        }
+        callPicker() {
+            this.getFormData();
+            myRunner.picker();
+        }
+        getFormData(checkSheet = false) {
+            let formData = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
+                .reduce((acc, input) => ({...acc, [input.id]: input.value}), {})
 
-    function getFormData(checkSheet = false) {
-        let formData = Array.from(document.querySelectorAll('#queryForm input, textarea, checkbox'))
-            .reduce((acc, input) => ({...acc, [input.id]: input.value}), {})
+            formData.cleanedQuery = formData.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g, ' ').trim()
 
-        formData.cleanedQuery = formData.longQuery.replace(/\r?\n|\r/g, " ").replace(/\s+/g, ' ').trim()
-
-        if ((checkSheet) && !(formData.dataSheet || formData.currentSheet === 'checked')) {
-            addMessage('You must select a sheet!')
-            throw 'You must select a sheet!';
-        } else {
-            if (formData.currentSheet === 'checked') {
-                formData.useActiveSheet = 'true';
-                formData.dataSheet = null;
+            if ((checkSheet) && !(formData.dataSheet || formData.currentSheet === 'checked')) {
+                addMessage('You must select a sheet!')
+                throw 'You must select a sheet!';
             } else {
-                formData.useActiveSheet = 'false';
+                if (formData.currentSheet === 'checked') {
+                    formData.useActiveSheet = 'true';
+                    formData.dataSheet = null;
+                } else {
+                    formData.useActiveSheet = 'false';
+                }
+                return formData
             }
-
-            return formData
         }
     }
-
-    function callPicker() {
-        getFormData();
-        myRunner.picker();
-    }
-
-    function handleFormSubmit() {
-        const filters = myFilters.buildFilters()
-        const formData = getFormData(true);
-        myRunner.updateCache(formData)
-        myRunner.addQuery(formData, filters)
-    }
-
-    function updateInputs(data) {
-        if (data.dataSheet) {
-            const link = "'" + data.dataSheet + "'"
-            $('#selectedSheetDiv').show().html(
-                "<a href=" + link + " target=\"_blank\">" + data.sheetName + "</a>");
-
-            $('#dataSheet').val(data.dataSheet);
-        }
-        if (data.range) {
-            $('#range').val(data.range);
-        }
-        if (data.cleanedQuery) {
-            $('#longQuery').val(data.cleanedQuery);
-        }
-    }
-
-    function updateRange(range) {
-        $('#range').val(range);
-    }
-
-
-    function requiredElements(elements, required) {
-        for (let i = 0; i < elements.length; i++) {
-            elements[i].required = required
-        }
-    }
-
-    function clearFilters() {
-        $('#column').val(null);
-        $('#compareInput').val('=');
-        $('#value').val(null);
-        $('#isCell').prop('checked', false);
-        $('#isDate').prop('checked', false);
-    }
-
-    $(function() {
-        myRunner.withSuccessHandler(updateInputs).getFromCache();
-
-        // open helpBox modal
-        $('#helpBox').on('click', () => {
-            myRunner.helpBox();
-        })
-
-        // watches checkbox for current sheet
-        $('#currentSheet').on('click', () => {
-            if ($('#currentSheet').prop('checked')) {
-                $('#currentSheet').val('checked')
-                myRunner.withSuccessHandler(updateRange).getActiveRange();
-            } else {
-                $('#currentSheet').val(null);
-            }
-        })
-
-        // watches for helpCheckbox changes
-        $('#help').on('change', () => {
-            if ($('#help').prop('checked')) {
-                $('#queryWalkthrough').show();
-                $('#queryFreeForm').hide();
-                $('#help').val('checked');
-                $('#seeQuery').show();
-                requiredElements($('#queryWalkthrough input'), true);
-                requiredElements($('#queryFreeForm textarea'), false);
-            } else {
-                $('#queryWalkthrough').hide();
-                $('#queryFreeForm').show();
-                $('#help').val(null);
-                $('#seeQuery').hide();
-                requiredElements($('#queryWalkthrough input'), false);
-                requiredElements($('#queryFreeForm textarea'), true);
-            }
-        })
-
-        // watches for show filter button changes
-        $('#showFilter').on('click', () => {
-            $('#queryFilters').show();
-            $('#showFilter').prop('disabled', true);
-            $('#submit').prop('disabled', true);
-            $('#dateFormat').hide()
-
-            if (myFilters.filters.length) {
-                $('#andOrDiv').show()
-            }
-        })
-
-        $('#clearQueryFilters').on('click', () => {
-            myFilters.clearFilters();
-            $('#seeQuery').html('');
-        })
-
-        $('#addFilter').on('click', () => {
-            if (!($('#column').val() && $('#value').val())) {
-                addMessage('You must fill out both "WHERE" and "VALUE" to continue!');
-                throw 'You must fill out both "WHERE" and "VALUE" to continue!';
-            } else {
-                addMessage(null)
-            }
-
-            $('#submit').prop('disabled', false);
-
-            let filterInputs = {
-                chain: myFilters.chain,
-                column: $('#column').val(),
-                compareInput: $('#compareInput').val(),
-                val: $('#value').val(),
-                cell: $('#isCell').prop('checked'),
-                date: $('#isDate').prop('checked')
-            }
-            myFilters.addFilter(filterInputs);
-
-
-            myFilters.chain = null;
-            clearFilters();
-
-            $('#queryFilters').hide();
-            $('#showFilter').prop('disabled', false)
-
-            requiredElements($('#queryFilters input[type=text]'), true)
-
-            $('#seeQuery').show()
-                .html(myFilters.buildFilters());
-        })
-
-        $('#closeFilterBox').on('click', () => {
-            $('#queryFilters').hide();
-            $('#error').hide();
-            $('#showFilter').prop('disabled', false)
-            $('#submit').prop('disabled', false);
-
-            myFilters.chain = null;
-            clearFilters();
-        })
-
-        // and / or button clicks
-        $('#andButton').on('click', () => {
-            myFilters.chain = $('#andButton').val()
-            $('#andButton').prop('disabled', true);
-            $('#orButton').prop('disabled', false);
-        })
-        $('#orButton').on('click', () => {
-            myFilters.chain = $('#orButton').val()
-            $('#andButton').prop('disabled', false);
-            $('#orButton').prop('disabled', true);
-        })
-
-        // add message on isDate
-        $('#isDate').on('click', () => {
-            if ($('#isDate').prop('checked')) {
-                $('#dateFormat').show()
-            } else {
-                $('#dateFormat').hide()
-            }
-        })
-    })
 </script>

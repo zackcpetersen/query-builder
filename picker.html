@@ -7,8 +7,8 @@
             google.script.run.displayError(error)
         }
 
-        var myRunner = google.script.run.withFailureHandler(onFailure);
-        var pickerApiLoaded = false;
+        const myRunner = google.script.run.withFailureHandler(onFailure);
+        let pickerApiLoaded = false;
 
         function onApiLoad() {
             gapi.load('picker', {
@@ -23,9 +23,9 @@
 
             if (pickerApiLoaded && token) {
 
-                var view = new google.picker.View(google.picker.ViewId.SPREADSHEETS);
+                const view = new google.picker.View(google.picker.ViewId.SPREADSHEETS);
 
-                var picker = new google.picker.PickerBuilder()
+                const picker = new google.picker.PickerBuilder()
                     .addView(view)
                     .enableFeature(google.picker.Feature.NAV_HIDDEN)
                     .hideTitleBar()
